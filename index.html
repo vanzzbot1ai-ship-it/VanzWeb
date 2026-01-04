@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VanzDev Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+    body {
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+        background-color: #d0ebff;
+    }
+
+    header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: #3399ff;
+        color: white;
+        padding: 15px 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    header h1 { margin: 0; font-size: 22px; }
+    #menu-btn {
+        font-size: 24px;
+        cursor: pointer;
+        border: none;
+        background: none;
+        color: white;
+    }
+
+    #sidebar {
+        position: fixed;
+        top: 0;
+        left: -250px;
+        width: 250px;
+        height: 100%;
+        background-color: #3399ff;
+        color: white;
+        padding-top: 60px;
+        transition: 0.3s;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+        z-index: 10;
+    }
+    #sidebar button {
+        width: 100%;
+        padding: 15px 20px;
+        border: none;
+        background: none;
+        color: white;
+        font-size: 16px;
+        text-align: left;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        transition: 0.2s;
+    }
+    #sidebar button:hover { background-color: #2880d0; }
+
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0;
+        background-color: rgba(0,0,0,0.4);
+        transition: 0.3s;
+        z-index: 5;
+    }
+
+    main { margin-left: 0; padding: 30px; transition: 0.3s; }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .card {
+        background-color: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .card h3 { margin-top: 0; }
+
+    #chatbox {
+        height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 8px;
+        background-color: #f1f9ff;
+        margin-bottom: 10px;
+    }
+    #chat-input {
+        width: calc(100% - 100px);
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    }
+    #send-btn {
+        padding: 10px 20px;
+        border: none;
+        background-color: #3399ff;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+    #send-btn:hover { background-color: #0073e6; }
+
+    #qr-section img {
+        width: 250px;
+        height: 500px;
+        border-radius: 12px;
+        border: 1px solid #3399ff;
+    }
+
+    form input, form button {
+        width: 100%;
+        margin-bottom: 15px;
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+    }
+    form button {
+        background-color: #3399ff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+    form button:hover { background-color: #0073e6; }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>VanzDev Dashboard</h1>
+    <button id="menu-btn">&#9776;</button>
+</header>
+
+<div id="sidebar">
+    <button onclick="showSection('dashboard')">Dashboard</button>
+    <button onclick="showSection('chatbot')">Chatbot Gemini</button>
+    <button onclick="showSection('qr')">QR WA</button>
+    <button onclick="showSection('elrayy')">API MAIN</button>
+    <button onclick="showSection('about')">Tentang VanzDev</button>
+    <button onclick="showSection('private')">FOTO PRIVAT</button>
+</div>
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<main>
+  
+  <div class="section" id="private-section">
+
+  <!-- CARD PASSWORD -->
+  <div class="card" id="lock-card" style="max-width:420px;margin:auto;text-align:center;">
+    <h3>Foto ini di kunci sandinya berada di tentang vanz di bagian kata-kata</h3>
+    <p>Masukkan sandi untuk membuka galeri</p>
+
+    <input
+      id="private-password"
+      type="password"
+      placeholder="Masukkan sandi..."
+      style="
+        width:100%;
+        padding:14px;
+        font-size:16px;
+        border-radius:10px;
+        border:2px solid #3399ff;
+        box-sizing:border-box;
+        margin-bottom:12px;
+      "
+    >
+
+    <button
+      onclick="unlockGallery()"
+      style="
+        width:100%;
+        padding:14px;
+        font-size:16px;
+        font-weight:600;
+        border:none;
+        border-radius:10px;
+        background:linear-gradient(135deg,#ff4b2b,#ff416c);
+        color:white;
+        cursor:pointer;
+      "
+    >
+      Buka Galeri
+    </button>
+
+    <p id="lock-error" style="color:red;margin-top:10px;display:none;">
+      ❌ Sandi salah
+    </p>
+  </div>
+
+  <!-- GALERI FOTO -->
+  <div class="card" id="gallery-card" style="
+  display:none;
+  background:#f7f7f7;
+  padding:16px;
+  border-radius:16px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.15);
+">
+  <h3 style="text-align:center; margin-bottom:14px;">📸 Galeri Pribadi</h3>
+
+  <div class="gallery-grid" style="
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
+    gap:14px;
+  ">
+
+    <div class="photo-card" style="
+      background:#fff;
+      border-radius:12px;
+      padding:8px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.12);
+    ">
+      <img 
+        src="https://picsum.photos/600/400?1" 
+        alt="Foto 1"
+        style="
+          width:100%;
+          height:130px;
+          object-fit:cover;
+          border-radius:8px;
+          display:block;
+        "
+      >
+    </div>
+
+  </div>
+
+    <button
+      onclick="lockGallery()"
+      style="
+        margin-top:20px;
+        width:100%;
+        padding:12px;
+        border:none;
+        border-radius:8px;
+        background:#333;
+        color:white;
+        cursor:pointer;
+      "
+    >
+      🔒 Kunci Kembali
+    </button>
+  </div>
+ 
+</div>
+  
+  <div class="section" id="elrayy-section">
+    <div class="card" style="max-width:500px;margin:auto;text-align:center;">
+        <h3 style="margin-bottom:15px;">Brat Generator</h3>
+
+        <input 
+            id="brat-text"
+            type="text"
+            placeholder="Ketik teks brat di sini..."
+            style="
+                width:100%;
+                padding:14px 16px;
+                font-size:16px;
+                border-radius:10px;
+                border:2px solid #3399ff;
+                outline:none;
+                transition:0.3s;
+                box-sizing:border-box;
+            "
+            onfocus="this.style.borderColor='#0073e6'"
+            onblur="this.style.borderColor='#3399ff'"
+        >
+
+        <button 
+            onclick="generateBrat()"
+            style="
+                width:100%;
+                margin-top:12px;
+                padding:14px;
+                font-size:16px;
+                font-weight:600;
+                border:none;
+                border-radius:10px;
+                background:linear-gradient(135deg,#3399ff,#0073e6);
+                color:white;
+                cursor:pointer;
+                transition:0.3s;
+            "
+            onmouseover="this.style.opacity='0.9'"
+            onmouseout="this.style.opacity='1'"
+        >
+            Generate Brat
+        </button>
+
+        <div 
+            id="brat-result" 
+            style="margin-top:20px;text-align:center;"
+        ></div>
+    </div>
+    <div class="card" style="max-width:500px;margin:20px auto;text-align:center;">
+    <h3>🎬 BratVid Generator</h3>
+
+    <input 
+        id="bratvid-text"
+        type="text"
+        placeholder="Ketik teks video brat..."
+        style="
+            width:100%;
+            padding:14px 16px;
+            font-size:16px;
+            border-radius:10px;
+            border:2px solid #3399ff;
+            outline:none;
+            box-sizing:border-box;
+        "
+    >
+
+    <button 
+        onclick="generateBratVid()"
+        style="
+            width:100%;
+            margin-top:12px;
+            padding:14px;
+            font-size:16px;
+            font-weight:600;
+            border:none;
+            border-radius:10px;
+            background:linear-gradient(135deg,#00c6ff,#0072ff);
+            color:white;
+            cursor:pointer;
+        "
+    >
+        Generate Brat Video
+    </button>
+
+    <div 
+        id="bratvid-result" 
+        style="margin-top:20px;"
+    ></div>
+</div>
+    <div class="card" style="max-width:500px;margin:20px auto;text-align:center;">
+    <h3>📱 iPhone Quoted Generator</h3>
+
+    <input 
+        id="iphone-text"
+        type="text"
+        placeholder="Ketik pesan iPhone..."
+        style="
+            width:100%;
+            padding:14px 16px;
+            font-size:16px;
+            border-radius:10px;
+            border:2px solid #3399ff;
+            outline:none;
+            box-sizing:border-box;
+            transition:0.3s;
+        "
+    >
+
+    <button 
+        onclick="generateIphoneQuote()"
+        style="
+            width:100%;
+            margin-top:12px;
+            padding:14px;
+            font-size:16px;
+            font-weight:600;
+            border:none;
+            border-radius:10px;
+            background:linear-gradient(135deg,#3399ff,#0073e6);
+            color:white;
+            cursor:pointer;
+            transition:0.3s;
+        "
+    >
+        Generate iPhone Quote
+    </button>
+
+    <div 
+        id="iphone-result" 
+        style="margin-top:20px;text-align:center;"
+    ></div>
+</div>
+<div class="card" style="max-width:500px;margin:20px auto;text-align:center;">
+    <h3>🎌 Brat Anime Generator</h3>
+
+    <input 
+        id="bratanime-text"
+        type="text"
+        placeholder="Ketik teks anime..."
+        style="
+            width:100%;
+            padding:14px 16px;
+            font-size:16px;
+            border-radius:10px;
+            border:2px solid #3399ff;
+            outline:none;
+            box-sizing:border-box;
+            transition:0.3s;
+        "
+    >
+
+    <button 
+        onclick="generateBratAnime()"
+        style="
+            width:100%;
+            margin-top:12px;
+            padding:14px;
+            font-size:16px;
+            font-weight:600;
+            border:none;
+            border-radius:10px;
+            background:linear-gradient(135deg,#3399ff,#0073e6);
+            color:white;
+            cursor:pointer;
+            transition:0.3s;
+        "
+    >
+        Generate Brat Anime
+    </button>
+
+    <div 
+        id="bratanime-result" 
+        style="margin-top:20px;text-align:center;"
+    ></div>
+</div>
+<div class="card" style="max-width:500px;margin:20px auto;text-align:center;">
+    <h3>😀 Emoji Mix Generator</h3>
+    <p>Masukkan dua emoji untuk digabung</p>
+
+    <input
+        id="emoji1"
+        type="text"
+        placeholder="Emoji pertama (contoh: 😀)"
+        style="
+            width:100%;
+            padding:14px;
+            font-size:20px;
+            text-align:center;
+            border-radius:10px;
+            border:2px solid #3399ff;
+            margin-bottom:10px;
+            box-sizing:border-box;
+        "
+    >
+
+    <input
+        id="emoji2"
+        type="text"
+        placeholder="Emoji kedua (contoh: 😈)"
+        style="
+            width:100%;
+            padding:14px;
+            font-size:20px;
+            text-align:center;
+            border-radius:10px;
+            border:2px solid #3399ff;
+            margin-bottom:12px;
+            box-sizing:border-box;
+        "
+    >
+
+    <button
+        onclick="generateEmojiMix()"
+        style="
+            width:100%;
+            padding:14px;
+            font-size:16px;
+            font-weight:600;
+            border:none;
+            border-radius:10px;
+            background:linear-gradient(135deg,#3399ff,#0073e6);
+            color:white;
+            cursor:pointer;
+        "
+    >
+        Gabungkan Emoji
+    </button>
+
+    <div id="emoji-result" style="margin-top:20px;"></div>
+</div>
+<div class="card" style="max-width:520px;margin:20px auto;text-align:center;">
+    <h3>🎨 AI Logo Generator</h3>
+    <p>Masukkan deskripsi logo (warna, tema, gaya)</p>
+
+    <input
+        id="logo-prompt"
+        type="text"
+        placeholder="Contoh: logo merah modern minimalis"
+        style="
+            width:100%;
+            padding:14px 16px;
+            font-size:15px;
+            border-radius:10px;
+            border:2px solid #3399ff;
+            outline:none;
+            box-sizing:border-box;
+            margin-bottom:12px;
+        "
+    >
+
+    <button
+        onclick="generateLogo()"
+        style="
+            width:100%;
+            padding:14px;
+            font-size:16px;
+            font-weight:600;
+            border:none;
+            border-radius:10px;
+            background:linear-gradient(135deg,#3399ff,#0073e6);
+            color:white;
+            cursor:pointer;
+        "
+    >
+        Generate Logo
+    </button>
+
+    <div id="logo-result" style="margin-top:20px;"></div>
+</div>
+</div>
+    <!-- Dashboard -->
+    <div class="section active" id="dashboard-section">
+        <h2>Dashboard Utama</h2>
+
+        <!-- Kotak Gambar -->
+        <div class="card" style="text-align:center;">
+            <h3>form u 2000 years ago</h3>
+            <video 
+    src="https://e.top4top.io/m_3646otyye1.mp4" 
+    style="width:100%; max-width:400px; border-radius:12px; object-fit:contain;" 
+    autoplay muted loop
+></video>
+            <p style="margin-top:10px;">Deskripsi singkat gambar</p>
+        </div>
+
+        <!-- Statistik Bot -->
+        <div class="card">
+            <h3>Statistik Bot ⚡</h3>
+            <p>→ Kecepatan jaringan: Ping 24 ms | Download 72 Mbps | Upload 32 Mbps.</p>
+            <p>→ Status Gemini: Terhubung 🟢.</p>
+            <p>→ Respon rata-rata: 0.8 detik.</p>
+        </div>
+
+        <!-- Info Cepat -->
+        <div class="card">
+            <h3>Info Cepat</h3>
+            <p>Kamu bisa memakai bot WhatsApp atau chatbot melalui menu samping.</p>
+        </div>
+
+        <!-- Tombol Musik -->
+        <div class="card" style="text-align:center;">
+            <button id="music-btn" style="padding:10px 20px; border:none; border-radius:6px; background-color:#3399ff; color:white; cursor:pointer;">
+                Play Musik
+            </button>
+        </div>
+    </div>
+
+    <!-- Chatbot Gemini -->
+    <div class="section" id="chatbot-section">
+        <h2>Chatbot Gemini</h2>
+        
+        
+        <div class="card" style="max-width:500px;margin:20px auto;">
+    <h3 style="text-align:center;">🤖 AI Chat (Gemini)</h3>
+
+    <div 
+        id="ai-chatbox"
+        style="
+            height:220px;
+            overflow-y:auto;
+            padding:12px;
+            border-radius:10px;
+            background:#f1f9ff;
+            border:1px solid #cce5ff;
+            margin-bottom:12px;
+            font-size:14px;
+        "
+    ></div>
+
+    <input 
+        id="ai-input"
+        type="text"
+        placeholder="Ketik pesan..."
+        style="
+            width:100%;
+            padding:14px;
+            border-radius:10px;
+            border:2px solid #3399ff;
+            font-size:15px;
+            box-sizing:border-box;
+            outline:none;
+        "
+    >
+
+    <button 
+        onclick="sendAI()"
+        style="
+            width:100%;
+            margin-top:10px;
+            padding:14px;
+            border:none;
+            border-radius:10px;
+            background:linear-gradient(135deg,#3399ff,#0073e6);
+            color:white;
+            font-size:16px;
+            font-weight:600;
+            cursor:pointer;
+        "
+    >
+        Kirim
+    </button>
+  </div>
+</div>
+
+    <!-- QR WA -->
+    <div class="section" id="qr-section">
+        <h2>QR Bot WA</h2>
+        <div class="card">
+            <p>Scan QR ini untuk Chat bot:</p>
+            <img src="https://k.top4top.io/p_3646j6f4v1.jpg" alt="QR WA">
+            <p style="font-size:14px; color:#555;">Klik tombol di bawah untuk chat langsung</p>
+
+    <a 
+        href="https://wa.me/6288245672621" 
+        target="_blank"
+        style="text-decoration:none;"
+    >
+        <button
+            style="
+                margin-top:12px;
+                padding:14px 22px;
+                font-size:16px;
+                font-weight:600;
+                border:none;
+                border-radius:12px;
+                background:linear-gradient(135deg,#25D366,#128C7E);
+                color:white;
+                cursor:pointer;
+                box-shadow:0 6px 18px rgba(37,211,102,0.4);
+                transition:0.3s;
+            "
+            onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 8px 22px rgba(37,211,102,0.6)'"
+            onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 18px rgba(37,211,102,0.4)'"
+        >
+            💬 Chat WhatsApp
+        </button>
+    </a>
+        </div>
+    </div>
+
+    <!-- API Key Gemini -->
+    
+
+    <!-- Tentang VanzDev -->
+    <div class="section" id="about-section">
+        <h2>Tentang VanzDev</h2>
+
+        <!-- Foto Bulat -->
+        <div style="text-align:center; margin-bottom:20px;">
+            <img src="https://l.top4top.io/p_3646x2dsw2.jpg" alt="Foto VanzDev"
+                 style="width:150px; height:150px; border-radius:50%; border:3px solid #3399ff; object-fit:cover;">
+        </div>
+
+        <div class="card">
+            <h3>Siapa VanzDev?</h3>
+            <p>VanzDev adalah pengembang bot WhatsApp dan sistem AI Chatbot. Dashboard ini dibuat untuk memudahkan pengelolaan bot, integrasi Gemini AI, dan memonitor aktivitas bot secara real-time.</p>
+            <p>Selain itu ia masih memegang janji nya janji nya adalah "Jika Tidak Dengan mu maka tidak dengan siapapun" itu alasan nya si VanzDev suka Aot.</p>
+        </div>
+        <div class="card" style="text-align:center;">
+    <h3>Nomor WhatsApp VanzDev</h3>
+    <p style="margin-bottom:8px;">+62 895-3651-56485</p>
+    <p style="font-size:14px; color:#555;">Klik tombol di bawah untuk chat langsung</p>
+
+    <a 
+        href="https://wa.me/62895365156485" 
+        target="_blank"
+        style="text-decoration:none;"
+    >
+        <button
+            style="
+                margin-top:12px;
+                padding:14px 22px;
+                font-size:16px;
+                font-weight:600;
+                border:none;
+                border-radius:12px;
+                background:linear-gradient(135deg,#25D366,#128C7E);
+                color:white;
+                cursor:pointer;
+                box-shadow:0 6px 18px rgba(37,211,102,0.4);
+                transition:0.3s;
+            "
+            onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 8px 22px rgba(37,211,102,0.6)'"
+            onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 18px rgba(37,211,102,0.4)'"
+        >
+            💬 Chat WhatsApp
+        </button>
+    </a>
+</div>
+          
+        <div class="card">
+            <h3>Fitur</h3>
+            <ul>
+                <li>Dashboard bot dengan statistik</li>
+                <li>Chatbot Gemini AI</li>
+                <li>Integrasi QR WhatsApp untuk bot</li>
+                <li>Simpan API Key Gemini untuk chatbot</li>
+            </ul>
+        </div>
+    </div>
+</main>
+
+<!-- Musik Offline -->
+<audio id="bg-music" loop>
+  <source src="https://e.top4top.io/m_3646xlt9r0.mp3" type="audio/mpeg">
+  Browser kamu tidak mendukung audio.
+</audio>
+
+<script>
+// Sidebar toggle
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+document.getElementById('menu-btn').addEventListener('click', () => {
+    sidebar.style.left = '0';
+    overlay.style.width = '100%';
+});
+function closeSidebar() {
+    sidebar.style.left = '-250px';
+    overlay.style.width = '0';
+}
+
+// Show section
+function showSection(section) {
+    const sections = ['dashboard','chatbot','qr','elrayy','about','private'];
+    sections.forEach(sec => document.getElementById(sec+'-section').classList.remove('active'));
+    document.getElementById(section+'-section').classList.add('active');
+    closeSidebar();
+}
+function generateLogo() {
+    const prompt = document.getElementById('logo-prompt').value.trim();
+    const result = document.getElementById('logo-result');
+
+    if (!prompt) {
+        result.innerHTML = "<p>Prompt logo tidak boleh kosong</p>";
+        return;
+    }
+
+    const url = `https://api.elrayyxml.web.id/api/ai/ailogo?prompt=${encodeURIComponent(prompt)}`;
+
+    // Tampilan loading
+    result.innerHTML = `
+        <p style="font-weight:600;">⏳ Sedang membuat logo...</p>
+    `;
+
+    const img = new Image();
+    img.src = url;
+    img.style.maxWidth = "320px";
+    img.style.width = "100%";
+    img.style.borderRadius = "16px";
+    img.style.boxShadow = "0 8px 24px rgba(0,0,0,0.25)";
+    img.alt = "AI Logo";
+
+    img.onload = () => {
+        result.innerHTML = `
+            <img src="${url}" style="
+                max-width:320px;
+                width:100%;
+                border-radius:16px;
+                box-shadow:0 8px 24px rgba(0,0,0,0.25);
+            ">
+
+            <div style="margin-top:14px;">
+                <a href="${url}" target="_blank" style="text-decoration:none;">
+                    <button style="
+                        padding:10px 22px;
+                        border:none;
+                        border-radius:8px;
+                        background:#3399ff;
+                        color:white;
+                        font-weight:600;
+                        cursor:pointer;
+                    ">
+                        Buka / Download Logo
+                    </button>
+                </a>
+            </div>
+        `;
+    };
+
+    img.onerror = () => {
+        result.innerHTML = `
+            <p style="color:red;font-weight:600;">
+                ❌ Gagal membuat logo (API error)
+            </p>
+        `;
+    };
+}
+
+function generateEmojiMix() {
+    const e1 = document.getElementById('emoji1').value.trim();
+    const e2 = document.getElementById('emoji2').value.trim();
+    const result = document.getElementById('emoji-result');
+
+    if (!e1 || !e2) {
+        result.innerHTML = "<p>⚠️ Kedua emoji harus diisi</p>";
+        return;
+    }
+
+    const url = `https://api.elrayyxml.web.id/api/tools/emojimix?emoji1=${encodeURIComponent(e1)}&emoji2=${encodeURIComponent(e2)}`;
+
+    result.innerHTML = `
+        <img 
+            src="${url}" 
+            alt="Emoji Mix"
+            style="
+                max-width:220px;
+                border-radius:14px;
+                box-shadow:0 6px 20px rgba(0,0,0,0.25);
+            "
+        >
+        <div style="margin-top:12px;">
+            <a href="${url}" target="_blank" style="text-decoration:none;">
+                <button style="
+                    padding:8px 18px;
+                    border:none;
+                    border-radius:8px;
+                    background:#3399ff;
+                    color:white;
+                    font-weight:600;
+                    cursor:pointer;
+                ">
+                    Buka / Download
+                </button>
+            </a>
+        </div>
+    `;
+}
+
+const PRIVATE_PASSWORD = "Jika Tidak Dengan mu maka tidak dengan siapapun"; // GANTI SANDI DI SINI
+
+function unlockGallery() {
+  const input = document.getElementById("private-password").value;
+  const error = document.getElementById("lock-error");
+
+  if (input === PRIVATE_PASSWORD) {
+    document.getElementById("lock-card").style.display = "none";
+    document.getElementById("gallery-card").style.display = "block";
+    error.style.display = "none";
+  } else {
+    error.style.display = "block";
+  }
+}
+
+function lockGallery() {
+  document.getElementById("gallery-card").style.display = "none";
+  document.getElementById("lock-card").style.display = "block";
+  document.getElementById("private-password").value = "";
+}
+
+
+function generateBratVid() {
+    const text = document.getElementById('bratvid-text').value.trim();
+    const result = document.getElementById('bratvid-result');
+
+    if (!text) {
+        result.innerHTML = "<p>Teks tidak boleh kosong</p>";
+        return;
+    }
+
+    const url = `https://api.elrayyxml.web.id/api/maker/bratvid?text=${encodeURIComponent(text)}`;
+
+    result.innerHTML = `
+        <img 
+            src="${url}"
+            alt="Brat GIF"
+            style="
+                max-width:100%;
+                border-radius:14px;
+                box-shadow:0 6px 20px rgba(0,0,0,0.25);
+                display:block;
+                margin:auto;
+            "
+        >
+
+        <div style="text-align:center;margin-top:12px;">
+            <a href="${url}" target="_blank">
+                <button style="
+                    padding:10px 22px;
+                    border:none;
+                    border-radius:8px;
+                    background:linear-gradient(135deg,#3399ff,#0073e6);
+                    color:white;
+                    font-weight:600;
+                    cursor:pointer;
+                ">
+                    Download GIF
+                </button>
+            </a>
+        </div>
+    `;
+}
+
+function generateIphoneQuote() {
+    const teks = document.getElementById('iphone-text').value.trim();
+    const result = document.getElementById('iphone-result');
+
+    if (!teks) {
+        result.innerHTML = "<p>Teks tidak boleh kosong</p>";
+        return;
+    }
+
+    const url = `https://brat.siputzx.my.id/iphone-quoted?time=12.00&batteryPercentage=90&carrierName=AXIS&messageText=${encodeURIComponent(teks)}&emojiStyle=apple`;
+
+    result.innerHTML = `
+        <img 
+            src="${url}" 
+            style="max-width:100%;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,0.2);"
+        >
+    `;
+}
+function generateBratAnime() {
+    const text = document.getElementById('bratanime-text').value.trim();
+    const result = document.getElementById('bratanime-result');
+
+    if (!text) {
+        result.innerHTML = "<p>Teks tidak boleh kosong</p>";
+        return;
+    }
+
+    const url = `https://api.elrayyxml.web.id/api/maker/bratanime?text=${encodeURIComponent(text)}`;
+
+    result.innerHTML = `
+        <img 
+            src="${url}" 
+            style="
+                max-width:100%;
+                border-radius:14px;
+                box-shadow:0 6px 20px rgba(0,0,0,0.25);
+            "
+        >
+    `;
+}
+
+async function sendAI() {
+    const input = document.getElementById('ai-input');
+    const chatbox = document.getElementById('ai-chatbox');
+    const text = input.value.trim();
+
+    if (!text) return;
+
+    chatbox.innerHTML += `<p><strong>Kamu:</strong> ${text}</p>`;
+    input.value = '';
+
+    try {
+        const res = await fetch(
+            `https://api.elrayyxml.web.id/api/ai/gemini?text=${encodeURIComponent(text)}`
+        );
+        const data = await res.json();
+
+        const reply = data.result || data.response || "Tidak ada balasan.";
+
+        chatbox.innerHTML += `<p><strong>AI:</strong> ${reply}</p>`;
+        chatbox.scrollTop = chatbox.scrollHeight;
+
+    } catch (e) {
+        chatbox.innerHTML += `<p><strong>AI:</strong> Gagal terhubung ke API.</p>`;
+    }
+}
+
+
+function generateBrat(){
+    const text = document.getElementById('brat-text').value.trim();
+    if(!text) return;
+    const url = `https://api.elrayyxml.web.id/api/maker/brat?text=${encodeURIComponent(text)}`;
+    document.getElementById('brat-result').innerHTML =
+        `<img src="${url}" style="max-width:100%;border-radius:12px">`;
+}
+// Tombol Play/Pause Musik Offline
+const music = document.getElementById('bg-music');
+const musicBtn = document.getElementById('music-btn');
+
+musicBtn.addEventListener('click', () => {
+    if(music.paused){
+        music.play();
+        musicBtn.textContent = 'Pause Musik';
+    } else {
+        music.pause();
+        musicBtn.textContent = 'Play Musik';
+    }
+});
+</script>
+
+</body>
+</html>
