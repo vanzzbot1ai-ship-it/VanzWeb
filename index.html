@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vanz Group Chat</title>
+
+<style>
+body{margin:0;font-family:Segoe UI;background:#0f2027;color:white;}
+.screen{display:none;height:100vh;flex-direction:column;}
+.active{display:flex;}
+header{background:#075e54;padding:15px;text-align:center;font-weight:bold;}
+
+.login{
+flex:1;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+gap:15px;
+}
+
+.profile-preview{
+width:100px;height:100px;border-radius:50%;
+background:#222;background-size:cover;
+background-position:center;cursor:pointer;
+border:3px solid #25d366;
+}
+
+input,button{
+padding:10px;border:none;border-radius:5px;
+width:80%;max-width:300px;
+}
+
+button{background:#25d366;color:black;font-weight:bold;}
+
+.chat-box{
+flex:1;overflow:auto;padding:10px;
+display:flex;flex-direction:column;
+}
+
+.msg{display:flex;margin:8px 0;max-width:85%;}
+.me{align-self:flex-end;flex-direction:row-reverse;}
+
+.msg img.profile{
+width:35px;height:35px;border-radius:50%;margin:0 8px;
+}
+
+.bubble{background:#222;padding:8px 12px;border-radius:10px;}
+.me .bubble{background:#25d366;color:black;}
+
+.bubble img,.bubble video{max-width:200px;border-radius:10px;margin-top:5px;}
+
+.bottom{display:flex;padding:10px;background:#111;gap:5px;}
+.bottom input[type=text]{flex:1;}
+.bottom input[type=file]{display:none;}
+
+.file-btn{background:#ff9800;padding:10px;border-radius:5px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="screen active">
+<header>Set Profile</header>
+<div class="login">
+<div class="profile-preview" id="preview"></div>
+<input id="name" placeholder="Nama kamu">
+<button onclick="start()">Masuk Group</button>
+<input type="file" id="profilePhoto" accept="image/*" capture="user" hidden>
+</div>
+</div>
+
+<!-- CHAT -->
+<div id="chat" class="screen">
+<header>🔥 Vanz Group Chat</header>
+<div class="chat-box" id="messages"></div>
+
+<div class="bottom">
+<input id="text" placeholder="Ketik pesan">
+<label for="file" class="file-btn">📎</label>
+<input type="file" id="file">
+<button onclick="send()">Kirim</button>
+</div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io()
+let profile = null
+let selectedPhotoFile = null
+
+const preview = document.getElementById("preview")
+const profileInput = document.getElementById("profilePhoto")
+
+preview.onclick = () => profileInput.click()
+
+profileInput.onchange = (e)=>{
+selectedPhotoFile = e.target.files[0]
+if(!selectedPhotoFile) return
+preview.style.backgroundImage = `url(${URL.createObjectURL(selectedPhotoFile)})`
+}
+
+async function uploadFile(file){
+const formData = new FormData()
+formData.append("file", file)
+const res = await fetch("/upload",{method:"POST",body:formData})
+return await res.json()
+}
+
+async function start(){
+const name = document.getElementById("name").value
+if(!name) return alert("Isi nama dulu")
+
+let photoUrl = "/uploads/default.png"
+
+if(selectedPhotoFile){
+const upload = await uploadFile(selectedPhotoFile)
+photoUrl = "/uploads/" + upload.filename
+}
+
+profile = { name, photo: photoUrl }
+localStorage.setItem("profile", JSON.stringify(profile))
+showChat()
+}
+
+if(localStorage.getItem("profile")){
+profile = JSON.parse(localStorage.getItem("profile"))
+showChat()
+}
+
+function showChat(){
+document.getElementById("login").classList.remove("active")
+document.getElementById("chat").classList.add("active")
+}
+
+function render(msg){
+const div = document.createElement("div")
+div.classList.add("msg")
+if(msg.name === profile.name) div.classList.add("me")
+
+let content = ""
+
+if(msg.type==="text") content = msg.text
+else if(msg.type==="image") content = `<img src="${msg.file}">`
+else if(msg.type==="video") content = `<video controls src="${msg.file}"></video>`
+else if(msg.type==="audio") content = `<audio controls src="${msg.file}"></audio>`
+else content = `<a href="${msg.file}" target="_blank">Download File</a>`
+
+div.innerHTML = `
+<img class="profile" src="${msg.photo}">
+<div>
+<div style="font-size:12px;opacity:.7">${msg.name}</div>
+<div class="bubble">${content}</div>
+</div>
+`
+
+document.getElementById("messages").appendChild(div)
+document.getElementById("messages").scrollTop =
+document.getElementById("messages").scrollHeight
+}
+
+async function send(){
+const text=document.getElementById("text")
+const fileInput=document.getElementById("file")
+
+if(fileInput.files.length>0){
+const upload=await uploadFile(fileInput.files[0])
+let type="file"
+
+if(upload.mimetype.startsWith("image")) type="image"
+else if(upload.mimetype.startsWith("video")) type="video"
+else if(upload.mimetype.startsWith("audio")) type="audio"
+
+socket.emit("message",{
+name:profile.name,
+photo:profile.photo,
+type:type,
+file:"/uploads/"+upload.filename
+})
+
+fileInput.value=""
+}
+else if(text.value.trim()!==""){
+socket.emit("message",{
+name:profile.name,
+photo:profile.photo,
+type:"text",
+text:text.value
+})
+text.value=""
+}
+}
+
+socket.on("history",(msgs)=>msgs.forEach(render))
+socket.on("message",(msg)=>render(msg))
+</script>
+
+</body>
+</html>
